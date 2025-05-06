@@ -14,6 +14,12 @@ players_df = pd.read_csv("players.csv")
 matches_df = pd.read_csv("matches.csv")
 player_list = players_df["Name"].dropna().tolist()
 
+# --- Valid Tennis Set Scores ---
+valid_scores = [
+    "6-0", "6-1", "6-2", "6-3", "6-4", "7-5", "7-6",
+    "0-6", "1-6", "2-6", "3-6", "4-6", "5-7", "6-7"
+]
+
 st.title("🎾 Ranches Ladies Tennis Group")
 
 # --- Match Entry Section ---
@@ -25,7 +31,7 @@ if match_type == "Singles":
     p2_options = [p for p in player_list if p != p1]
     p2 = st.selectbox("Player 2", p2_options, key="s2")
     winner = st.selectbox("Winner", [p1, p2], key="sw")
-    score = st.text_input("Set Score (e.g., 6-3)", key="sscore")
+    score = st.selectbox("Set Score", valid_scores, key="sscore")
 
     if st.button("Submit Singles Match"):
         matches_df = pd.concat([matches_df, pd.DataFrame([{
@@ -51,7 +57,7 @@ elif match_type == "Doubles":
     team1 = f"{p1} & {p2}"
     team2 = f"{p3} & {p4}"
     winner = st.selectbox("Winning Team", [team1, team2], key="dw")
-    score = st.text_input("Set Score (e.g., 6-4)", key="dscore")
+    score = st.selectbox("Set Score", valid_scores, key="dscore")
 
     if st.button("Submit Doubles Match"):
         matches_df = pd.concat([matches_df, pd.DataFrame([{
@@ -180,7 +186,7 @@ if not matches_df.empty:
         ep1 = st.sidebar.selectbox("Player 1", player_list, index=player_list.index(match_row["Player 1"]), key="ep1")
         ep2 = st.sidebar.selectbox("Player 2", [p for p in player_list if p != ep1], index=0, key="ep2")
         ewinner = st.sidebar.selectbox("Winner", [ep1, ep2], index=0 if match_row["Winner(s)"] == ep1 else 1)
-        escore = st.sidebar.text_input("Set Score", match_row["Set Score"])
+        escore = st.sidebar.selectbox("Set Score", valid_scores, index=valid_scores.index(match_row["Set Score"]) if match_row["Set Score"] in valid_scores else 0)
         ep3, ep4 = "", ""
 
     else:  # Doubles
@@ -191,7 +197,7 @@ if not matches_df.empty:
         team1 = f"{ep1} & {ep2}"
         team2 = f"{ep3} & {ep4}"
         ewinner = st.sidebar.selectbox("Winner", [team1, team2], index=0 if match_row["Winner(s)"] == team1 else 1)
-        escore = st.sidebar.text_input("Set Score", match_row["Set Score"])
+        escore = st.sidebar.selectbox("Set Score", valid_scores, index=valid_scores.index(match_row["Set Score"]) if match_row["Set Score"] in valid_scores else 0)
 
     if st.sidebar.button("Save Changes"):
         matches_df.at[match_id, "Match Type"] = edit_type
