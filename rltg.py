@@ -22,9 +22,11 @@ match_type = st.selectbox("Match Type", ["Singles", "Doubles"])
 
 if match_type == "Singles":
     p1 = st.selectbox("Player 1", player_list, key="s1")
-    p2 = st.selectbox("Player 2", [p for p in player_list if p != p1], key="s2")
+    p2_options = [p for p in player_list if p != p1]
+    p2 = st.selectbox("Player 2", p2_options, key="s2")
     winner = st.selectbox("Winner", [p1, p2], key="sw")
     score = st.text_input("Set Score (e.g., 6-3)", key="sscore")
+
     if st.button("Submit Singles Match"):
         matches_df = pd.concat([matches_df, pd.DataFrame([{
             "Date": datetime.now().strftime("%Y-%m-%d"),
@@ -45,10 +47,12 @@ elif match_type == "Doubles":
     p2 = st.selectbox("Player 2", [p for p in player_list if p != p1], key="d2")
     p3 = st.selectbox("Player 3", [p for p in player_list if p not in [p1, p2]], key="d3")
     p4 = st.selectbox("Player 4", [p for p in player_list if p not in [p1, p2, p3]], key="d4")
+
     team1 = f"{p1} & {p2}"
     team2 = f"{p3} & {p4}"
     winner = st.selectbox("Winning Team", [team1, team2], key="dw")
     score = st.text_input("Set Score (e.g., 6-4)", key="dscore")
+
     if st.button("Submit Doubles Match"):
         matches_df = pd.concat([matches_df, pd.DataFrame([{
             "Date": datetime.now().strftime("%Y-%m-%d"),
@@ -173,17 +177,17 @@ if not matches_df.empty:
     edit_type = st.sidebar.selectbox("Match Type", ["Singles", "Doubles"], index=["Singles", "Doubles"].index(match_row["Match Type"]))
 
     if edit_type == "Singles":
-        ep1 = st.sidebar.selectbox("Player 1", player_list, index=player_list.index(match_row["Player 1"]))
-        ep2 = st.sidebar.selectbox("Player 2", [p for p in player_list if p != ep1], index=0)
+        ep1 = st.sidebar.selectbox("Player 1", player_list, index=player_list.index(match_row["Player 1"]), key="ep1")
+        ep2 = st.sidebar.selectbox("Player 2", [p for p in player_list if p != ep1], index=0, key="ep2")
         ewinner = st.sidebar.selectbox("Winner", [ep1, ep2], index=0 if match_row["Winner(s)"] == ep1 else 1)
         escore = st.sidebar.text_input("Set Score", match_row["Set Score"])
         ep3, ep4 = "", ""
 
     else:  # Doubles
-        ep1 = st.sidebar.selectbox("Player 1", player_list, index=player_list.index(match_row["Player 1"]))
-        ep2 = st.sidebar.selectbox("Player 2", [p for p in player_list if p != ep1], index=0)
-        ep3 = st.sidebar.selectbox("Player 3", [p for p in player_list if p not in [ep1, ep2]], index=0)
-        ep4 = st.sidebar.selectbox("Player 4", [p for p in player_list if p not in [ep1, ep2, ep3]], index=0)
+        ep1 = st.sidebar.selectbox("Player 1", player_list, index=player_list.index(match_row["Player 1"]), key="epd1")
+        ep2 = st.sidebar.selectbox("Player 2", [p for p in player_list if p != ep1], index=0, key="epd2")
+        ep3 = st.sidebar.selectbox("Player 3", [p for p in player_list if p not in [ep1, ep2]], index=0, key="epd3")
+        ep4 = st.sidebar.selectbox("Player 4", [p for p in player_list if p not in [ep1, ep2, ep3]], index=0, key="epd4")
         team1 = f"{ep1} & {ep2}"
         team2 = f"{ep3} & {ep4}"
         ewinner = st.sidebar.selectbox("Winner", [team1, team2], index=0 if match_row["Winner(s)"] == team1 else 1)
