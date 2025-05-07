@@ -80,7 +80,7 @@ st.markdown('''
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Offside&display=swap');
     html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
-        font-family: 'Indie Flower', cursive !important;
+        font-family: 'Offside', cursive !important;
     }
     </style>
 ''', unsafe_allow_html=True)
