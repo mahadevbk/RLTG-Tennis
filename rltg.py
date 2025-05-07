@@ -76,7 +76,16 @@ def compute_stats(matches):
     return stats
 
 # Streamlit UI
-st.title("RANCHES LADIES TENNIS GROUP")
+st.markdown('''
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap');
+    html, body, [class*="st-"], [class^="css"] {
+        font-family: 'Indie Flower', cursive !important;
+    }
+    </style>
+''', unsafe_allow_html=True)
+
+st.title("Ranches Ladies Tennis Group")
 
 players = load_players()
 matches = load_matches()
