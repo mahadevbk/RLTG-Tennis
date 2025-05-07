@@ -153,7 +153,9 @@ if not matches.empty:
     match_display["Players"] = match_display.apply(
         lambda row: f"{row['team1_player1']}{' & ' + row['team1_player2'] if row['team1_player2'] else ''} vs {row['team2_player1']}{' & ' + row['team2_player2'] if row['team2_player2'] else ''}", axis=1
     )
-    match_display = match_display[["date", "Players", "match_type", "id"]]
+    match_display["Formatted Date"] = pd.to_datetime(match_display["date"]).dt.strftime("%d %b %y")
+    match_display = match_display[["Formatted Date", "Players", "match_type", "id"]]
+    match_display.columns = ["Date", "Match Players", "Match Type", "Match ID"]
     st.dataframe(match_display)
 
 st.header("Player Rankings")
