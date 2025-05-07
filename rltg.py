@@ -49,20 +49,6 @@ def save_matches(matches):
     matches_sheet.clear()
     matches_sheet.update([df.columns.tolist()] + df.values.tolist())
 
-# Load Google Fonts CSS
-def load_custom_font():
-    font_css = """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
-
-    html, body, [class*="st-"], [class^="css"], div, p, span, label, button,
-    input, select, textarea, .stTextInput, .stSelectbox {
-        font-family: 'Permanent Marker', cursive !important;
-    }
-    </style>
-    """
-    st.markdown(font_css, unsafe_allow_html=True)
-
 # Compute points and stats
 def compute_stats(matches):
     stats = defaultdict(lambda: {"points": 0, "wins": 0, "games": 0, "partners": defaultdict(int)})
@@ -90,7 +76,6 @@ def compute_stats(matches):
     return stats
 
 # Streamlit UI
-load_custom_font()
 st.title("Ranches Ladies Tennis Group")
 
 players = load_players()
@@ -108,7 +93,7 @@ with st.sidebar:
     if st.button("Remove Selected Player") and remove_player:
         players.remove(remove_player)
         save_players(players)
-        st.experimental_rerun()
+        st.rerun()
 
     st.header("Edit/Delete Match")
     match_to_edit = st.selectbox("Select Match to Edit/Delete", matches["id"].tolist() if not matches.empty else [])
@@ -116,7 +101,7 @@ with st.sidebar:
         if st.button("Delete Match"):
             matches = matches[matches["id"] != match_to_edit]
             save_matches(matches)
-            st.experimental_rerun()
+            st.rerun()
 
 st.header("Enter Match Result")
 match_type = st.radio("Match Type", ["Singles", "Doubles"])
@@ -160,7 +145,7 @@ if st.button("Submit Match"):
     matches = pd.concat([matches, pd.DataFrame([new_match])], ignore_index=True)
     save_matches(matches)
     st.success("Match recorded successfully.")
-    st.experimental_rerun()
+    st.rerun()
 
 st.header("Match Records")
 st.dataframe(matches)
