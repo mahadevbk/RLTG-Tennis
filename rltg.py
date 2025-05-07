@@ -16,9 +16,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 SHEET_NAME = "RLTG Data"
 
 # Google Sheets setup
-gcreds_file = "gcreds.json"
+#gcreds_file = "gcreds.json"
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds_dict = json.loads(st.secrets["gcp_service_account"])
+creds_dict = st.secrets["gcp_service_account"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 
 
