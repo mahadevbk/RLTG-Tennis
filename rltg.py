@@ -1,31 +1,9 @@
+
 import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
 from collections import defaultdict
-
-import base64
-
-def load_custom_font():
-    font_path = "fonts/PermanentMarker-Regular.ttf"
-    with open(font_path, "rb") as f:
-        font_data = f.read()
-        base64_encoded = base64.b64encode(font_data).decode()
-
-    font_css = f"""
-    <style>
-    @font-face {{
-        font-family: 'PermanentMarker';
-        src: url(data:font/ttf;base64,{base64_encoded}) format('truetype');
-    }}
-    html, body, [class*="css"] {{
-        font-family: 'PermanentMarker', cursive !important;
-    }}
-    </style>
-    """
-    st.markdown(font_css, unsafe_allow_html=True)
-
-load_custom_font()
 
 # --- File Setup ---
 if not os.path.exists("players.csv"):
