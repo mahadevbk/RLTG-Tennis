@@ -76,11 +76,30 @@ def compute_stats(matches):
     return stats
 
 # Streamlit UI
+#st.markdown('''
+#    <style>
+#    @import url('https://fonts.googleapis.com/css2?family=Offside&display=swap');
+#    html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
+#        font-family: 'Offside', cursive !important;
+#    }
+#    </style>
+#''', unsafe_allow_html=True)
 st.markdown('''
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Offside&display=swap');
-    html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
+
+    html, body, [class*="st-"], [class^="css"] {
         font-family: 'Offside', cursive !important;
+        font-size: 12px !important; /* Set a base font size */
+    }
+
+    h1 { font-size: 24px !important; }
+    h2 { font-size: 20px !important; }
+    h3 { font-size: 16px !important; }
+    h4, h5, h6 { font-size: 14px !important; }
+
+    .stText, .stMarkdown {
+        font-size: 12px !important;
     }
     </style>
 ''', unsafe_allow_html=True)
