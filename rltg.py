@@ -1,236 +1,189 @@
 import streamlit as st
 import pandas as pd
 import os
+import uuid
 from datetime import datetime
 from collections import defaultdict
 import base64
 
-# --- Load Custom Font Globally ---
+# Constants
+PLAYER_FILE = "players.csv"
+MATCH_FILE = "matches.csv"
+
+# Tennis scoring options
+SCORE_OPTIONS = [
+    "6-0", "6-1", "6-2", "6-3", "6-4", "7-5", "7-6",
+    "0-6", "1-6", "2-6", "3-6", "4-6", "5-7", "6-7"
+]
+
+# Load or create player list
+def load_players():
+    if os.path.exists(PLAYER_FILE):
+        return pd.read_csv(PLAYER_FILE)["Player"].tolist()
+    else:
+        pd.DataFrame(columns=["Player"]).to_csv(PLAYER_FILE, index=False)
+        return []
+
+# Save players
+def save_players(players):
+    pd.DataFrame({"Player": players}).to_csv(PLAYER_FILE, index=False)
+
+# Load or create match data
+def load_matches():
+    if os.path.exists(MATCH_FILE):
+        return pd.read_csv(MATCH_FILE)
+    else:
+        df = pd.DataFrame(columns=[
+            "id", "date", "match_type", "team1_player1", "team1_player2",
+            "team2_player1", "team2_player2", "set1_score", "winner"
+        ])
+        df.to_csv(MATCH_FILE, index=False)
+        return df
+
+# Save matches
+def save_matches(matches):
+    matches.to_csv(MATCH_FILE, index=False)
+
+# Load Google Fonts CSS
 def load_custom_font():
     font_css = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
 
-    html, body, [class*="st-"], [class^="css"], div, p, span, label, button, input, select, textarea, .stTextInput, .stSelectbox {
+    html, body, [class*="st-"], [class^="css"], div, p, span, label, button,
+    input, select, textarea, .stTextInput, .stSelectbox {
         font-family: 'Permanent Marker', cursive !important;
     }
     </style>
     """
     st.markdown(font_css, unsafe_allow_html=True)
 
+# Compute points and stats
+def compute_stats(matches):
+    stats = defaultdict(lambda: {"points": 0, "wins": 0, "games": 0, "partners": defaultdict(int)})
 
+    for _, row in matches.iterrows():
+        team1 = [row["team1_player1"]] if row["match_type"] == "Singles" else [row["team1_player1"], row["team1_player2"]]
+        team2 = [row["team2_player1"]] if row["match_type"] == "Singles" else [row["team2_player1"], row["team2_player2"]]
+        t1_score, t2_score = map(int, row["set1_score"].split("-"))
+        winning_team = team1 if row["winner"] == "Team 1" else team2
+        losing_team = team2 if row["winner"] == "Team 1" else team1
 
-# --- File Setup ---
-if not os.path.exists("players.csv"):
-    pd.DataFrame(columns=["Name"]).to_csv("players.csv", index=False)
-if not os.path.exists("matches.csv"):
-    pd.DataFrame(columns=["Date", "Match Type", "Player 1", "Player 2", "Player 3", "Player 4", "Winner(s)", "Set Score"]).to_csv("matches.csv", index=False)
+        for player in winning_team:
+            stats[player]["points"] += 3
+            stats[player]["wins"] += 1
+            stats[player]["games"] += max(t1_score, t2_score)
+        for player in losing_team:
+            stats[player]["games"] += min(t1_score, t2_score)
 
-players_df = pd.read_csv("players.csv")
-matches_df = pd.read_csv("matches.csv")
-player_list = players_df["Name"].dropna().tolist()
+        if row["match_type"] == "Doubles":
+            stats[team1[0]]["partners"][team1[1]] += 1
+            stats[team1[1]]["partners"][team1[0]] += 1
+            stats[team2[0]]["partners"][team2[1]] += 1
+            stats[team2[1]]["partners"][team2[0]] += 1
 
-# --- Valid Tennis Set Scores ---
-valid_scores = [
-    "6-0", "6-1", "6-2", "6-3", "6-4", "7-5", "7-6",
-    "0-6", "1-6", "2-6", "3-6", "4-6", "5-7", "6-7"
-]
+    return stats
 
-st.title("🎾 Ranches Ladies Tennis Group")
+# Streamlit UI
+load_custom_font()
+st.title("Ranches Ladies Tennis Group")
 
-# --- Match Entry Section ---
-st.header("Enter a New Match Result")
-match_type = st.selectbox("Match Type", ["Singles", "Doubles"])
+players = load_players()
+matches = load_matches()
+
+with st.sidebar:
+    st.header("Manage Players")
+    new_player = st.text_input("Add New Player")
+    if st.button("Add Player") and new_player and new_player not in players:
+        players.append(new_player)
+        save_players(players)
+        st.experimental_rerun()
+
+    remove_player = st.selectbox("Remove Player", [""] + players)
+    if st.button("Remove Selected Player") and remove_player:
+        players.remove(remove_player)
+        save_players(players)
+        st.experimental_rerun()
+
+    st.header("Edit/Delete Match")
+    match_to_edit = st.selectbox("Select Match to Edit/Delete", matches["id"].tolist())
+    if match_to_edit:
+        if st.button("Delete Match"):
+            matches = matches[matches["id"] != match_to_edit]
+            save_matches(matches)
+            st.experimental_rerun()
+
+st.header("Enter Match Result")
+match_type = st.radio("Match Type", ["Singles", "Doubles"])
+available_players = players.copy()
 
 if match_type == "Singles":
-    p1 = st.selectbox("Player 1", player_list, key="s1")
-    p2_options = [p for p in player_list if p != p1]
-    p2 = st.selectbox("Player 2", p2_options, key="s2")
-    winner = st.selectbox("Winner", [p1, p2], key="sw")
-    score = st.selectbox("Set Score", valid_scores, key="sscore")
+    p1 = st.selectbox("Player 1", available_players)
+    available_players.remove(p1)
+    p2 = st.selectbox("Player 2", available_players)
+    team1 = [p1]
+    team2 = [p2]
+else:
+    p1 = st.selectbox("Team 1 - Player 1", available_players, key="t1p1")
+    available_players.remove(p1)
+    p2 = st.selectbox("Team 1 - Player 2", available_players, key="t1p2")
+    available_players.remove(p2)
+    p3 = st.selectbox("Team 2 - Player 1", available_players, key="t2p1")
+    available_players.remove(p3)
+    p4 = st.selectbox("Team 2 - Player 2", available_players, key="t2p2")
+    team1 = [p1, p2]
+    team2 = [p3, p4]
 
-    if st.button("Submit Singles Match"):
-        matches_df = pd.concat([matches_df, pd.DataFrame([{
-            "Date": datetime.now().strftime("%Y-%m-%d"),
-            "Match Type": "Singles",
-            "Player 1": p1,
-            "Player 2": p2,
-            "Player 3": "",
-            "Player 4": "",
-            "Winner(s)": winner,
-            "Set Score": score
-        }])], ignore_index=True)
-        matches_df.to_csv("matches.csv", index=False)
-        st.success("Match recorded.")
-        st.experimental_rerun()
+set_score = st.selectbox("Set Score (Team 1 - Team 2)", SCORE_OPTIONS)
+winner = st.radio("Winner", ["Team 1", "Team 2"])
 
-elif match_type == "Doubles":
-    p1 = st.selectbox("Player 1", player_list, key="d1")
-    p2 = st.selectbox("Player 2", [p for p in player_list if p != p1], key="d2")
-    p3 = st.selectbox("Player 3", [p for p in player_list if p not in [p1, p2]], key="d3")
-    p4 = st.selectbox("Player 4", [p for p in player_list if p not in [p1, p2, p3]], key="d4")
-
-    team1 = f"{p1} & {p2}"
-    team2 = f"{p3} & {p4}"
-    winner = st.selectbox("Winning Team", [team1, team2], key="dw")
-    score = st.selectbox("Set Score", valid_scores, key="dscore")
-
-    if st.button("Submit Doubles Match"):
-        matches_df = pd.concat([matches_df, pd.DataFrame([{
-            "Date": datetime.now().strftime("%Y-%m-%d"),
-            "Match Type": "Doubles",
-            "Player 1": p1,
-            "Player 2": p2,
-            "Player 3": p3,
-            "Player 4": p4,
-            "Winner(s)": winner,
-            "Set Score": score
-        }])], ignore_index=True)
-        matches_df.to_csv("matches.csv", index=False)
-        st.success("Match recorded.")
-        st.experimental_rerun()
-
-# --- Match Records Display ---
-st.header("📜 Match Records")
-st.dataframe(matches_df)
-
-# --- Rankings & Stats ---
-st.header("📊 Player Rankings & Stats")
-points = defaultdict(int)
-wins = defaultdict(int)
-games_won = defaultdict(int)
-partners = defaultdict(list)
-
-for _, row in matches_df.iterrows():
-    players = [row["Player 1"], row["Player 2"], row["Player 3"], row["Player 4"]]
-    players = [p for p in players if p]
-    match_type = row["Match Type"]
-    set_score = row["Set Score"]
-    try:
-        g1, g2 = map(int, set_score.strip().split("-"))
-    except:
-        g1, g2 = 0, 0
-
-    if match_type == "Singles":
-        winner = row["Winner(s)"]
-        loser = row["Player 2"] if winner == row["Player 1"] else row["Player 1"]
-        points[winner] += 3
-        wins[winner] += 1
-        games_won[winner] += g1
-        games_won[loser] += g2
-
-    elif match_type == "Doubles":
-        team1 = [row["Player 1"], row["Player 2"]]
-        team2 = [row["Player 3"], row["Player 4"]]
-        if row["Winner(s)"] == f"{row['Player 1']} & {row['Player 2']}":
-            winners = team1
-            losers = team2
-        else:
-            winners = team2
-            losers = team1
-        for w in winners:
-            points[w] += 3
-            wins[w] += 1
-            games_won[w] += g1
-        for l in losers:
-            games_won[l] += g2
-        for p in team1:
-            partners[p].append(team1[1] if p == team1[0] else team1[0])
-        for p in team2:
-            partners[p].append(team2[1] if p == team2[0] else team2[0])
-
-ranking_df = pd.DataFrame({
-    "Player": list(points.keys()),
-    "Points": [points[p] for p in points],
-    "Wins": [wins[p] for p in points],
-    "Games Won": [games_won[p] for p in points]
-}).sort_values(by=["Points", "Wins", "Games Won"], ascending=False)
-
-st.dataframe(ranking_df)
-
-# --- Player Analysis ---
-st.header("🔍 Individual Player Analysis")
-selected_player = st.selectbox("Select Player", player_list)
-if selected_player:
-    st.subheader(f"Stats for {selected_player}")
-    st.write(f"**Total Points:** {points[selected_player]}")
-    st.write(f"**Match Wins:** {wins[selected_player]}")
-    st.write(f"**Games Won:** {games_won[selected_player]}")
-    if partners[selected_player]:
-        partner_counts = pd.Series(partners[selected_player]).value_counts()
-        best_partner = partner_counts.idxmax()
-        st.write(f"**Partners Played With:** {', '.join(partner_counts.index)}")
-        st.write(f"**Best Partner (Most Matches Together):** {best_partner}")
-    else:
-        st.write("No doubles matches yet.")
-
-# --- SIDEBAR: Admin Controls ---
-st.sidebar.title("⚙️ Admin Controls")
-
-# Add Player
-st.sidebar.subheader("Add a New Player")
-new_player = st.sidebar.text_input("Enter player name")
-if st.sidebar.button("Add Player"):
-    if new_player and new_player not in player_list:
-        players_df = pd.concat([players_df, pd.DataFrame([{"Name": new_player}])], ignore_index=True)
-        players_df.to_csv("players.csv", index=False)
-        st.sidebar.success(f"Player '{new_player}' added.")
-        st.experimental_rerun()
-    else:
-        st.sidebar.error("Invalid or duplicate player name.")
-
-# Remove Player
-st.sidebar.subheader("Remove a Player")
-remove_player = st.sidebar.selectbox("Select player to remove", player_list)
-if st.sidebar.button("Remove Player"):
-    players_df = players_df[players_df["Name"] != remove_player]
-    players_df.to_csv("players.csv", index=False)
-    st.sidebar.success(f"Player '{remove_player}' removed.")
+if st.button("Submit Match"):
+    match_id = str(uuid.uuid4())
+    new_match = {
+        "id": match_id,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "match_type": match_type,
+        "team1_player1": team1[0],
+        "team1_player2": team1[1] if match_type == "Doubles" else "",
+        "team2_player1": team2[0],
+        "team2_player2": team2[1] if match_type == "Doubles" else "",
+        "set1_score": set_score,
+        "winner": winner
+    }
+    matches = matches.append(new_match, ignore_index=True)
+    save_matches(matches)
+    st.success("Match recorded successfully.")
     st.experimental_rerun()
 
-# Edit/Delete Match
-st.sidebar.subheader("Edit/Delete Match")
-if not matches_df.empty:
-    matches_df_display = matches_df.copy()
-    matches_df_display["Match ID"] = matches_df_display.index
-    match_id = st.sidebar.selectbox("Select Match to Edit/Delete", matches_df_display["Match ID"])
-    match_row = matches_df_display[matches_df_display["Match ID"] == match_id].iloc[0]
+st.header("Match Records")
+st.dataframe(matches)
 
-    edit_type = st.sidebar.selectbox("Match Type", ["Singles", "Doubles"], index=["Singles", "Doubles"].index(match_row["Match Type"]))
+st.header("Player Rankings")
+stats = compute_stats(matches)
 
-    if edit_type == "Singles":
-        ep1 = st.sidebar.selectbox("Player 1", player_list, index=player_list.index(match_row["Player 1"]), key="ep1")
-        ep2 = st.sidebar.selectbox("Player 2", [p for p in player_list if p != ep1], index=0, key="ep2")
-        ewinner = st.sidebar.selectbox("Winner", [ep1, ep2], index=0 if match_row["Winner(s)"] == ep1 else 1)
-        escore = st.sidebar.selectbox("Set Score", valid_scores, index=valid_scores.index(match_row["Set Score"]) if match_row["Set Score"] in valid_scores else 0)
-        ep3, ep4 = "", ""
+rankings = pd.DataFrame([
+    {
+        "Player": player,
+        "Points": data["points"],
+        "Wins": data["wins"],
+        "Games Won": data["games"]
+    }
+    for player, data in stats.items()
+])
 
-    else:  # Doubles
-        ep1 = st.sidebar.selectbox("Player 1", player_list, index=player_list.index(match_row["Player 1"]), key="epd1")
-        ep2 = st.sidebar.selectbox("Player 2", [p for p in player_list if p != ep1], index=0, key="epd2")
-        ep3 = st.sidebar.selectbox("Player 3", [p for p in player_list if p not in [ep1, ep2]], index=0, key="epd3")
-        ep4 = st.sidebar.selectbox("Player 4", [p for p in player_list if p not in [ep1, ep2, ep3]], index=0, key="epd4")
-        team1 = f"{ep1} & {ep2}"
-        team2 = f"{ep3} & {ep4}"
-        ewinner = st.sidebar.selectbox("Winner", [team1, team2], index=0 if match_row["Winner(s)"] == team1 else 1)
-        escore = st.sidebar.selectbox("Set Score", valid_scores, index=valid_scores.index(match_row["Set Score"]) if match_row["Set Score"] in valid_scores else 0)
+rankings = rankings.sort_values(by=["Points", "Wins", "Games Won"], ascending=False)
+st.dataframe(rankings.reset_index(drop=True))
 
-    if st.sidebar.button("Save Changes"):
-        matches_df.at[match_id, "Match Type"] = edit_type
-        matches_df.at[match_id, "Player 1"] = ep1
-        matches_df.at[match_id, "Player 2"] = ep2
-        matches_df.at[match_id, "Player 3"] = ep3
-        matches_df.at[match_id, "Player 4"] = ep4
-        matches_df.at[match_id, "Winner(s)"] = ewinner
-        matches_df.at[match_id, "Set Score"] = escore
-        matches_df.to_csv("matches.csv", index=False)
-        st.sidebar.success("Match updated.")
-        st.experimental_rerun()
-
-    if st.sidebar.button("Delete Match"):
-        matches_df = matches_df.drop(match_id)
-        matches_df.to_csv("matches.csv", index=False)
-        st.sidebar.success("Match deleted.")
-        st.experimental_rerun()
-else:
-    st.sidebar.info("No matches to edit.")
+st.header("Individual Player Insights")
+selected_player = st.selectbox("Select Player", players)
+if selected_player:
+    player_data = stats.get(selected_player, {"points": 0, "wins": 0, "games": 0, "partners": {}})
+    st.write(f"**Points:** {player_data['points']}")
+    st.write(f"**Match Wins:** {player_data['wins']}")
+    st.write(f"**Games Won:** {player_data['games']}")
+    if player_data["partners"]:
+        partners = sorted(player_data["partners"].items(), key=lambda x: -x[1])
+        st.write("**Partners Played With:**")
+        for partner, count in partners:
+            st.write(f"- {partner}: {count} times")
+        st.write(f"**Best Partner:** {partners[0][0]}")
