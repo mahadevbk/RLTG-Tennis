@@ -76,7 +76,7 @@ def compute_stats(matches):
     return stats
 
 # Streamlit UI
-st.title("Ranches Ladies Tennis Group")
+st.title("RANCHES LADIES TENNIS GROUP")
 
 players = load_players()
 matches = load_matches()
