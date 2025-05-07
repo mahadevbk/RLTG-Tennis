@@ -26,7 +26,7 @@ def load_players():
     df = pd.DataFrame(players_sheet.get_all_records())
     if "Player" not in df.columns:
         df = pd.DataFrame(columns=["Player"])
-    return df["Player"].dropna().tolist()
+    return df["Player"].dropna().str.upper().tolist()
 
 # Save players to Google Sheets
 def save_players(players):
@@ -83,7 +83,7 @@ matches = load_matches()
 
 with st.sidebar:
     st.header("Manage Players")
-    new_player = st.text_input("Add New Player")
+    new_player = st.text_input("Add New Player").upper()
     if st.button("Add Player") and new_player and new_player not in players:
         players.append(new_player)
         save_players(players)
@@ -152,7 +152,7 @@ if not matches.empty:
     match_display = matches.copy()
     match_display["Players"] = match_display.apply(
         lambda row: f"{row['team1_player1']}{' & ' + row['team1_player2'] if row['team1_player2'] else ''} vs {row['team2_player1']}{' & ' + row['team2_player2'] if row['team2_player2'] else ''}", axis=1
-    )
+    ).str.upper()
     match_display["Formatted Date"] = pd.to_datetime(match_display["date"]).dt.strftime("%d %b %y")
     match_display = match_display[["Formatted Date", "Players", "match_type", "id"]]
     match_display.columns = ["Date", "Match Players", "Match Type", "Match ID"]
@@ -163,7 +163,7 @@ stats = compute_stats(matches)
 
 rankings = pd.DataFrame([
     {
-        "Player": player,
+        "Player": player.upper(),
         "Points": data["points"],
         "Wins": data["wins"],
         "Games Won": data["games"]
@@ -182,9 +182,14 @@ if selected_player:
     st.write(f"**Points:** {player_data['points']}")
     st.write(f"**Match Wins:** {player_data['wins']}")
     st.write(f"**Games Won:** {player_data['games']}")
+    st.write(f"**Matches Played:** {player_data['wins'] + sum(player_data['partners'].values())}")
+    st.write(f"**Losses:** {sum(player_data['partners'].values())}")
+    total_matches = player_data['wins'] + sum(player_data['partners'].values())
+    win_pct = (player_data['wins'] / total_matches * 100) if total_matches else 0
+    st.write(f"**Win %:** {win_pct:.1f}%"))}")
     if player_data["partners"]:
         partners = sorted(player_data["partners"].items(), key=lambda x: -x[1])
         st.write("**Partners Played With:**")
         for partner, count in partners:
-            st.write(f"- {partner}: {count} times")
-        st.write(f"**Best Partner:** {partners[0][0]}")
+            st.write(f"- {partner.upper()}: {count} times")
+        st.write(f"**Best Partner:** {partners[0][0].upper()}")
