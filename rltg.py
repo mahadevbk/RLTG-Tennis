@@ -79,11 +79,12 @@ def compute_stats(matches):
 st.markdown('''
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap');
-    html, body, [class*="st-"], [class^="css"] {
+    html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
         font-family: 'Indie Flower', cursive !important;
     }
     </style>
 ''', unsafe_allow_html=True)
+
 
 st.title("Ranches Ladies Tennis Group")
 
