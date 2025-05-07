@@ -78,7 +78,7 @@ def compute_stats(matches):
 # Streamlit UI
 st.markdown('''
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Delius&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Delius+Handdrawn&display=swap');
     html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
         font-family: 'Indie Flower', cursive !important;
     }
