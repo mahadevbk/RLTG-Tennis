@@ -102,7 +102,7 @@ with st.sidebar:
     if st.button("Add Player") and new_player and new_player not in players:
         players.append(new_player)
         save_players(players)
-        st.experimental_rerun()
+        st.rerun()
 
     remove_player = st.selectbox("Remove Player", ["" ] + players)
     if st.button("Remove Selected Player") and remove_player:
