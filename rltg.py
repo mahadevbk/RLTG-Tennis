@@ -93,10 +93,10 @@ st.markdown('''
         font-size: 12px !important; /* Set a base font size */
     }
 
-    h1 { font-size: 24px !important; }
-    h2 { font-size: 20px !important; }
-    h3 { font-size: 16px !important; }
-    h4, h5, h6 { font-size: 14px !important; }
+    h1 { font-size: 20px !important; }
+    h2 { font-size: 18px !important; }
+    h3 { font-size: 14px !important; }
+    h4, h5, h6 { font-size: 12px !important; }
 
     .stText, .stMarkdown {
         font-size: 12px !important;
