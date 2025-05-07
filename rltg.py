@@ -18,14 +18,15 @@ def load_custom_font():
         font-family: 'PermanentMarker';
         src: url(data:font/ttf;base64,{base64_encoded}) format('truetype');
     }}
-    html, body, [class*="css"] {{
+    
+    html, body, h1, h2, h3, h4, h5, h6, p, div, span, label, section, button, input, textarea,
+    [class*="css"], .stButton>button, .stTextInput>div>div>input, .stSelectbox>div>div>div {{
         font-family: 'PermanentMarker', cursive !important;
     }}
     </style>
     """
     st.markdown(font_css, unsafe_allow_html=True)
 
-load_custom_font()
 
 # --- File Setup ---
 if not os.path.exists("players.csv"):
