@@ -38,7 +38,12 @@ def save_players(players):
 # Load or create match data
 def load_matches():
     if os.path.exists(MATCH_FILE):
-        return pd.read_csv(MATCH_FILE)
+        df = pd.read_csv(MATCH_FILE)
+        if "id" not in df.columns:
+            # Assign new unique IDs to existing rows
+            df["id"] = [str(uuid.uuid4()) for _ in range(len(df))]
+            df.to_csv(MATCH_FILE, index=False)
+        return df
     else:
         df = pd.DataFrame(columns=[
             "id", "date", "match_type", "team1_player1", "team1_player2",
@@ -46,6 +51,7 @@ def load_matches():
         ])
         df.to_csv(MATCH_FILE, index=False)
         return df
+
 
 # Save matches
 def save_matches(matches):
