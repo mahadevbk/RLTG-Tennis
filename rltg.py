@@ -7,15 +7,20 @@ from collections import defaultdict
 import base64
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from streamlit_gsheets import GSheetsConnection
 
+# Create a connection object.
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+SHEET_NAME = conn.read()
 # Constants
-SHEET_NAME = "RLTG Data"
+#SHEET_NAME = "RLTG Data"
 
 # Google Sheets setup
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds_dict = st.secrets["gcp_service_account"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-client = gspread.authorize(creds)
+#scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+#creds_dict = st.secrets["gcp_service_account"]
+#creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+#client = gspread.authorize(creds)
 
 # Define worksheets
 players_sheet = client.open(SHEET_NAME).worksheet("Players")
