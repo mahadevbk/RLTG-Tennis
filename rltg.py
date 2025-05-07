@@ -52,7 +52,6 @@ def load_matches():
         df.to_csv(MATCH_FILE, index=False)
         return df
 
-
 # Save matches
 def save_matches(matches):
     matches.to_csv(MATCH_FILE, index=False)
@@ -112,7 +111,7 @@ with st.sidebar:
         save_players(players)
         st.experimental_rerun()
 
-    remove_player = st.selectbox("Remove Player", ["" ] + players)
+    remove_player = st.selectbox("Remove Player", [""] + players)
     if st.button("Remove Selected Player") and remove_player:
         players.remove(remove_player)
         save_players(players)
@@ -132,7 +131,8 @@ available_players = players.copy()
 
 if match_type == "Singles":
     p1 = st.selectbox("Player 1", available_players)
-    available_players.remove(p1)
+    if p1 in available_players:
+        available_players.remove(p1)
     p2 = st.selectbox("Player 2", available_players)
     team1 = [p1]
     team2 = [p2]
