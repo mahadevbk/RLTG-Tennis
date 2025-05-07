@@ -38,12 +38,7 @@ def save_players(players):
 # Load or create match data
 def load_matches():
     if os.path.exists(MATCH_FILE):
-        df = pd.read_csv(MATCH_FILE)
-        if "id" not in df.columns:
-            # Assign new unique IDs to existing rows
-            df["id"] = [str(uuid.uuid4()) for _ in range(len(df))]
-            df.to_csv(MATCH_FILE, index=False)
-        return df
+        return pd.read_csv(MATCH_FILE)
     else:
         df = pd.DataFrame(columns=[
             "id", "date", "match_type", "team1_player1", "team1_player2",
@@ -94,6 +89,12 @@ def compute_stats(matches):
             stats[team2[0]]["partners"][team2[1]] += 1
             stats[team2[1]]["partners"][team2[0]] += 1
 
+    # Ensure all players in the stats have 'Points', 'Wins', and 'Games Won' even if 0.
+    for player in stats:
+        stats[player]["points"] = stats[player].get("points", 0)
+        stats[player]["wins"] = stats[player].get("wins", 0)
+        stats[player]["games"] = stats[player].get("games", 0)
+
     return stats
 
 # Streamlit UI
@@ -111,7 +112,7 @@ with st.sidebar:
         save_players(players)
         st.experimental_rerun()
 
-    remove_player = st.selectbox("Remove Player", [""] + players)
+    remove_player = st.selectbox("Remove Player", ["" ] + players)
     if st.button("Remove Selected Player") and remove_player:
         players.remove(remove_player)
         save_players(players)
@@ -131,8 +132,7 @@ available_players = players.copy()
 
 if match_type == "Singles":
     p1 = st.selectbox("Player 1", available_players)
-    if p1 in available_players:
-        available_players.remove(p1)
+    available_players.remove(p1)
     p2 = st.selectbox("Player 2", available_players)
     team1 = [p1]
     team2 = [p2]
@@ -184,7 +184,13 @@ rankings = pd.DataFrame([
     for player, data in stats.items()
 ])
 
-rankings = rankings.sort_values(by=["Points", "Wins", "Games Won"], ascending=False)
+# Ensure the columns are present before sorting
+if "Points" in rankings.columns and "Wins" in rankings.columns and "Games Won" in rankings.columns:
+    rankings = rankings.sort_values(by=["Points", "Wins", "Games Won"], ascending=False)
+else:
+    st.error("Error: Required columns for sorting not found.")
+    st.stop()
+
 st.dataframe(rankings.reset_index(drop=True))
 
 st.header("Individual Player Insights")
