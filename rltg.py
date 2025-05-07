@@ -186,7 +186,7 @@ if selected_player:
     st.write(f"**Losses:** {sum(player_data['partners'].values())}")
     total_matches = player_data['wins'] + sum(player_data['partners'].values())
     win_pct = (player_data['wins'] / total_matches * 100) if total_matches else 0
-    st.write(f"**Win %:** {win_pct:.1f}%"))
+    st.write(f"**Win %:** {win_pct:.1f}%")
     if player_data["partners"]:
         partners = sorted(player_data["partners"].items(), key=lambda x: -x[1])
         st.write("**Partners Played With:**")
