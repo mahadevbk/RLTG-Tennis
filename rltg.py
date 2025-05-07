@@ -18,20 +18,33 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 # Load data from Google Sheets using the connection object
 # For publicly shared sheets, you just need the URL and worksheet name.
 # The connector handles the authentication for public access.
+# Removed usecols=lambda x: x.lower() in ["player"] to avoid caching error
 try:
-    players_df = conn.read(spreadsheet=SHEET_URL, worksheet="Players", usecols=lambda x: x.lower() in ["player"])
+    players_full_df = conn.read(spreadsheet=SHEET_URL, worksheet="Players")
     matches_df = conn.read(spreadsheet=SHEET_URL, worksheet="Matches")
 except Exception as e:
     st.error(f"Error loading data from Google Sheets: {e}")
     st.stop()
 
 # Load players from DataFrame
-def load_players(players_df):
-    if players_df is None or "Player" not in players_df.columns:
+def load_players(players_full_df):
+    if players_full_df is None or players_full_df.empty:
         return []
-    # Ensure 'Player' column is string type before dropna
-    players_df['Player'] = players_df['Player'].astype(str)
-    return players_df["Player"].dropna().tolist()
+
+    # Find the column that is likely the 'Player' column (case-insensitive)
+    player_column = None
+    for col in players_full_df.columns:
+        if col.lower() == "player":
+            player_column = col
+            break
+
+    if player_column is None:
+        st.warning("Could not find a 'Player' column in the 'Players' sheet.")
+        return []
+
+    # Ensure the found column is string type before dropna
+    players_full_df[player_column] = players_full_df[player_column].astype(str)
+    return players_full_df[player_column].dropna().tolist()
 
 # Save players to Google Sheets (Note: Writing back to a public sheet requires authentication setup not covered here)
 # If you need write functionality, you will need to configure authentication
@@ -84,6 +97,7 @@ def compute_stats(matches):
 
     for _, row in matches.iterrows():
         # Ensure necessary columns exist before accessing
+        # Added checks for team1_player2 and team2_player2 as they might be missing in Singles
         if not all(col in row for col in ["match_type", "team1_player1", "team2_player1", "set1_score", "winner"]):
             continue # Skip rows with missing data
 
@@ -100,19 +114,20 @@ def compute_stats(matches):
         losing_team = team2 if row["winner"] == "Team 1" else team1
 
         for player in winning_team:
-            if player: # Ensure player name is not empty
+            if player and isinstance(player, str): # Ensure player name is not empty and is a string
                 stats[player]["points"] += 3
                 stats[player]["wins"] += 1
                 stats[player]["games"] += max(t1_score, t2_score)
         for player in losing_team:
-             if player: # Ensure player name is not empty
+             if player and isinstance(player, str): # Ensure player name is not empty and is a string
                 stats[player]["games"] += min(t1_score, t2_score)
 
         if row["match_type"] == "Doubles":
-            if team1[0] and team1[1]:
+            # Ensure both players in a team are valid strings before adding partners
+            if team1[0] and isinstance(team1[0], str) and team1[1] and isinstance(team1[1], str):
                 stats[team1[0]]["partners"][team1[1]] += 1
                 stats[team1[1]]["partners"][team1[0]] += 1
-            if team2[0] and team2[1]:
+            if team2[0] and isinstance(team2[0], str) and team2[1] and isinstance(team2[1], str):
                 stats[team2[0]]["partners"][team2[1]] += 1
                 stats[team2[1]]["partners"][team2[0]] += 1
 
@@ -124,7 +139,7 @@ load_custom_font()
 st.title("Ranches Ladies Tennis Group")
 
 # Load data into the app
-players = load_players(players_df)
+players = load_players(players_full_df)
 matches = load_matches(matches_df)
 
 
@@ -161,15 +176,22 @@ if match_type == "Singles":
     team1 = [p1]
     team2 = [p2]
 else:
-    p1 = st.selectbox("Team 1 - Player 1", available_players, key="t1p1")
-    available_players = [p for p in available_players if p != p1]
-    p2 = st.selectbox("Team 1 - Player 2", available_players, key="t1p2")
-    available_players = [p for p in available_players if p != p2]
-    p3 = st.selectbox("Team 2 - Player 1", available_players, key="t2p1")
-    available_players = [p for p in available_players if p != p3]
-    p4 = st.selectbox("Team 2 - Player 2", available_players, key="t2p2")
-    team1 = [p1, p2]
-    team2 = [p3, p4]
+    # Ensure there are enough players for doubles before displaying selectboxes
+    if len(available_players) >= 4:
+        p1 = st.selectbox("Team 1 - Player 1", available_players, key="t1p1")
+        available_players = [p for p in available_players if p != p1]
+        p2 = st.selectbox("Team 1 - Player 2", available_players, key="t1p2")
+        available_players = [p for p in available_players if p != p2]
+        p3 = st.selectbox("Team 2 - Player 1", available_players, key="t2p1")
+        available_players = [p for p in available_players if p != p3]
+        p4 = st.selectbox("Team 2 - Player 2", available_players, key="t2p2")
+        team1 = [p1, p2]
+        team2 = [p3, p4]
+    else:
+        st.warning("Need at least 4 players to enter a doubles match.")
+        team1 = []
+        team2 = []
+
 
 set_score = st.selectbox("Set Score (Team 1 - Team 2)", [
     "6-0", "6-1", "6-2", "6-3", "6-4", "7-5", "7-6",
@@ -178,28 +200,44 @@ winner = st.radio("Winner", ["Team 1", "Team 2"])
 
 if st.button("Submit Match"):
     # Basic validation
-    if match_type == "Singles" and (not team1[0] or not team2[0]):
-        st.warning("Please select two different players for a singles match.")
-    elif match_type == "Doubles" and (not team1[0] or not team1[1] or not team2[0] or not team2[1] or len(set(team1 + team2)) != 4):
-         st.warning("Please select four different players for a doubles match.")
-    else:
-        match_id = str(uuid.uuid4())
-        new_match = {
-            "id": match_id,
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "match_type": match_type,
-            "team1_player1": team1[0],
-            "team1_player2": team1[1] if match_type == "Doubles" and len(team1) > 1 else "",
-            "team2_player1": team2[0],
-            "team2_player2": team2[1] if match_type == "Doubles" and len(team2) > 1 else "",
-            "set1_score": set_score,
-            "winner": winner
-        }
-        # Use pd.concat for adding new row and reset index
-        matches = pd.concat([matches, pd.DataFrame([new_match])], ignore_index=True).reset_index(drop=True)
-        save_matches(matches) # This will show a warning as save is not fully implemented
-        st.success("Match recorded successfully.")
-        st.experimental_rerun()
+    if match_type == "Singles":
+         if not (team1[0] and team2[0] and team1[0] != team2[0]):
+              st.warning("Please select two different players for a singles match.")
+              st.stop() # Stop execution if validation fails
+         # Check if players are selected from the available list
+         if team1[0] not in players or team2[0] not in players:
+              st.warning("Selected players must be in the player list.")
+              st.stop()
+
+    elif match_type == "Doubles":
+         # Check if all 4 players are selected and are distinct
+         all_selected_doubles_players = [team1[0], team1[1], team2[0], team2[1]]
+         if not all(all_selected_doubles_players) or len(set(all_selected_doubles_players)) != 4:
+              st.warning("Please select four different players for a doubles match.")
+              st.stop()
+         # Check if players are selected from the available list
+         if not all(p in players for p in all_selected_doubles_players):
+             st.warning("Selected players must be in the player list.")
+             st.stop()
+
+    # If validation passes, proceed to record the match
+    match_id = str(uuid.uuid4())
+    new_match = {
+        "id": match_id,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "match_type": match_type,
+        "team1_player1": team1[0],
+        "team1_player2": team1[1] if match_type == "Doubles" and len(team1) > 1 else "",
+        "team2_player1": team2[0],
+        "team2_player2": team2[1] if match_type == "Doubles" and len(team2) > 1 else "",
+        "set1_score": set_score,
+        "winner": winner
+    }
+    # Use pd.concat for adding new row and reset index
+    matches = pd.concat([matches, pd.DataFrame([new_match])], ignore_index=True).reset_index(drop=True)
+    save_matches(matches) # This will show a warning as save is not fully implemented
+    st.success("Match recorded successfully.")
+    st.experimental_rerun()
 
 
 st.header("Match Records")
@@ -239,9 +277,10 @@ if players:
             partners = sorted(player_data["partners"].items(), key=lambda x: -x[1])
             st.write("**Partners Played With:**")
             for partner, count in partners:
-                if partner: # Only display if partner name is not empty
+                if partner and isinstance(partner, str): # Only display if partner name is not empty and is a string
                     st.write(f"- {partner}: {count} times")
-            if partners and partners[0][0]: # Check if there's a best partner and their name is not empty
+            # Check if there's a most frequent partner and their name is not empty/valid
+            if partners and partners[0][0] and isinstance(partners[0][0], str):
                  st.write(f"**Most Frequent Partner:** {partners[0][0]}")
         else:
             st.write("**No partners recorded for this player.**")
