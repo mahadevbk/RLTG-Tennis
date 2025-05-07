@@ -3,9 +3,9 @@ import pandas as pd
 import os
 from datetime import datetime
 from collections import defaultdict
-
 import base64
 
+# --- Load Custom Font Globally ---
 def load_custom_font():
     font_path = "fonts/PermanentMarker-Regular.ttf"
     with open(font_path, "rb") as f:
