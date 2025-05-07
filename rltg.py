@@ -19,7 +19,14 @@ SCORE_OPTIONS = [
 # Load or create player list
 def load_players():
     if os.path.exists(PLAYER_FILE):
-        return pd.read_csv(PLAYER_FILE)["Player"].tolist()
+        try:
+            df = pd.read_csv(PLAYER_FILE)
+            if "Player" not in df.columns:
+                raise ValueError("Missing 'Player' column")
+            return df["Player"].dropna().tolist()
+        except Exception:
+            pd.DataFrame(columns=["Player"]).to_csv(PLAYER_FILE, index=False)
+            return []
     else:
         pd.DataFrame(columns=["Player"]).to_csv(PLAYER_FILE, index=False)
         return []
@@ -99,7 +106,7 @@ with st.sidebar:
         save_players(players)
         st.experimental_rerun()
 
-    remove_player = st.selectbox("Remove Player", [""] + players)
+    remove_player = st.selectbox("Remove Player", ["" ] + players)
     if st.button("Remove Selected Player") and remove_player:
         players.remove(remove_player)
         save_players(players)
