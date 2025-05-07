@@ -110,7 +110,7 @@ st.markdown('''
 
 
 
-st.title("🎾 RANCHES LADIES TENNIS GROUP")
+st.title("🌼 RANCHES LADIES TENNIS GROUP 🎾")
 
 players = load_players()
 matches = load_matches()
