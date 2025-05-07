@@ -92,7 +92,9 @@ st.markdown('''
         font-family: 'Offside', cursive !important;
         font-size: 12px !important; /* Set a base font size */
     }
-
+    h1 {
+        font-size: 70% !important;
+    }
     h1 { font-size: 20px !important; }
     h2 { font-size: 18px !important; }
     h3 { font-size: 14px !important; }
