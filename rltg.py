@@ -7,6 +7,10 @@ from collections import defaultdict
 import base64
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import json
+import streamlit as st
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 # Constants
 SHEET_NAME = "RLTG Data"
@@ -14,8 +18,9 @@ SHEET_NAME = "RLTG Data"
 # Google Sheets setup
 gcreds_file = "gcreds.json"
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(gcreds_file, scope)
-client = gspread.authorize(creds)
+creds_dict = json.loads(st.secrets["gcp_service_account"])
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
 
 # Define worksheets
 players_sheet = client.open(SHEET_NAME).worksheet("Players")
