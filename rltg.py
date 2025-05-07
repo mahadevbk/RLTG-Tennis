@@ -7,25 +7,17 @@ import base64
 
 # --- Load Custom Font Globally ---
 def load_custom_font():
-    font_path = "fonts/PermanentMarker-Regular.ttf"
-    with open(font_path, "rb") as f:
-        font_data = f.read()
-        base64_encoded = base64.b64encode(font_data).decode()
-
-    font_css = f"""
+    font_css = """
     <style>
-    @font-face {{
-        font-family: 'PermanentMarker';
-        src: url(data:font/ttf;base64,{base64_encoded}) format('truetype');
-    }}
-    
-    html, body, h1, h2, h3, h4, h5, h6, p, div, span, label, section, button, input, textarea,
-    [class*="css"], .stButton>button, .stTextInput>div>div>input, .stSelectbox>div>div>div {{
-        font-family: 'PermanentMarker', cursive !important;
-    }}
+    @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+
+    html, body, [class*="st-"], [class^="css"], div, p, span, label, button, input, select, textarea, .stTextInput, .stSelectbox {
+        font-family: 'Permanent Marker', cursive !important;
+    }
     </style>
     """
     st.markdown(font_css, unsafe_allow_html=True)
+
 
 
 # --- File Setup ---
