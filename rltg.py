@@ -10,9 +10,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 from streamlit_gsheets import GSheetsConnection
 
 # Create a connection object.
-conn = st.connection("gsheets", type=GSheetsConnection)
+SHEET_NAME = st.connection("gsheets", type=GSheetsConnection)
 
-SHEET_NAME = conn.read()
+#SHEET_NAME = conn.read()
 # Constants
 #SHEET_NAME = "RLTG Data"
 
