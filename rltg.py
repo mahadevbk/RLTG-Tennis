@@ -90,12 +90,14 @@ st.markdown('''
 
     html, body, [class*="st-"], [class^="css"] {
         font-family: 'Offside', cursive !important;
-        font-size: 12px !important; /* Set a base font size */
+        font-size: 12px !important;
     }
-    h1 {
+
+    /* More targeted selector for st.title() */
+    [data-testid="stHeader"] h1 {
         font-size: 70% !important;
     }
-    h1 { font-size: 20px !important; }
+
     h2 { font-size: 18px !important; }
     h3 { font-size: 14px !important; }
     h4, h5, h6 { font-size: 12px !important; }
@@ -105,6 +107,7 @@ st.markdown('''
     }
     </style>
 ''', unsafe_allow_html=True)
+
 
 
 st.title("🎾 RANCHES LADIES TENNIS GROUP")
