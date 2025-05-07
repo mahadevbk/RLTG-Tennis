@@ -148,7 +148,13 @@ if st.button("Submit Match"):
     st.rerun()
 
 st.header("Match Records")
-st.dataframe(matches)
+if not matches.empty:
+    match_display = matches.copy()
+    match_display["Players"] = match_display.apply(
+        lambda row: f"{row['team1_player1']}{' & ' + row['team1_player2'] if row['team1_player2'] else ''} vs {row['team2_player1']}{' & ' + row['team2_player2'] if row['team2_player2'] else ''}", axis=1
+    )
+    match_display = match_display[["date", "Players", "match_type", "id"]]
+    st.dataframe(match_display)
 
 st.header("Player Rankings")
 stats = compute_stats(matches)
