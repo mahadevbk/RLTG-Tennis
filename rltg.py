@@ -7,20 +7,15 @@ from collections import defaultdict
 import base64
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import json
-import streamlit as st
-from oauth2client.service_account import ServiceAccountCredentials
-
 
 # Constants
 SHEET_NAME = "RLTG Data"
 
 # Google Sheets setup
-#gcreds_file = "gcreds.json"
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = st.secrets["gcp_service_account"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-
+client = gspread.authorize(creds)
 
 # Define worksheets
 players_sheet = client.open(SHEET_NAME).worksheet("Players")
@@ -88,11 +83,6 @@ def compute_stats(matches):
             stats[team1[1]]["partners"][team1[0]] += 1
             stats[team2[0]]["partners"][team2[1]] += 1
             stats[team2[1]]["partners"][team2[0]] += 1
-
-    for player in stats:
-        stats[player]["points"] = stats[player].get("points", 0)
-        stats[player]["wins"] = stats[player].get("wins", 0)
-        stats[player]["games"] = stats[player].get("games", 0)
 
     return stats
 
