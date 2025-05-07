@@ -31,8 +31,9 @@ def load_players():
 # Save players to Google Sheets
 def save_players(players):
     df = pd.DataFrame({"Player": players})
+    df.fillna("", inplace=True)
     players_sheet.clear()
-    players_sheet.update([df.columns.values.tolist()] + df.values.tolist())
+    players_sheet.update([df.columns.tolist()] + df.values.tolist())
 
 # Load matches from Google Sheets
 def load_matches():
@@ -43,8 +44,10 @@ def load_matches():
 
 # Save matches to Google Sheets
 def save_matches(matches):
+    df = matches.copy()
+    df.fillna("", inplace=True)
     matches_sheet.clear()
-    matches_sheet.update([matches.columns.values.tolist()] + matches.values.tolist())
+    matches_sheet.update([df.columns.tolist()] + df.values.tolist())
 
 # Load Google Fonts CSS
 def load_custom_font():
