@@ -227,3 +227,5 @@ if selected_player:
         for partner, count in partners:
             st.write(f"- {partner.upper()}: {count} times")
         st.write(f"**Best Partner:** {partners[0][0].upper()}")
+
+st.info("Built with ❤️ using [Streamlit](https://streamlit.io/) — free and open source. [Other Scripts by dev](https://devs-scripts.streamlit.app/) on Streamlit.")
