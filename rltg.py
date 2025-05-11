@@ -228,4 +228,11 @@ if selected_player:
             st.write(f"- {partner.upper()}: {count} times")
         st.write(f"**Best Partner:** {partners[0][0].upper()}")
 
-st.info("Built with ❤️ using [Streamlit](https://streamlit.io/) — free and open source. [Other Scripts by dev](https://devs-scripts.streamlit.app/) on Streamlit.")
+#st.info("Built with ❤️ using [Streamlit](https://streamlit.io/) — free and open source. [Other Scripts by dev](https://devs-scripts.streamlit.app/) on Streamlit.")
+st.markdown("""
+<div style='background-color:var(--secondary-background-color); padding: 1rem; border-radius: 8px; color: var(--text-color);'>
+    Built with ❤️ using <a href='https://streamlit.io/' target='_blank' style='color: var(--primary-color); text-decoration: none;'>Streamlit</a> — free and open source.
+    <br><a href='https://devs-scripts.streamlit.app/' target='_blank' style='color: var(--primary-color); text-decoration: none;'>Other Scripts by dev</a> on Streamlit.
+</div>
+""", unsafe_allow_html=True)
+
