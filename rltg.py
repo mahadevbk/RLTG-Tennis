@@ -76,14 +76,24 @@ def compute_stats(matches):
     return stats
 
 # Streamlit UI
+#st.markdown('''
+#    <style>
+#    @font-face {
+#    font-family: 'Offside';
+#    src: url('https://fonts.gstatic.com/s/offsideregular/v13/HI_KiYMe1YgE5Rk0h6RZz5MZq3k.woff2') format('woff2');
+#    font-weight: normal;
+#    font-style: normal;
+#}
+#    html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
+#        font-family: 'Offside', sans-serif !important;
+#    }
+#    </style>
+#''', unsafe_allow_html=True)
+
 st.markdown('''
     <style>
-    @font-face {
-    font-family: 'Offside';
-    src: url('https://fonts.gstatic.com/s/offsideregular/v13/HI_KiYMe1YgE5Rk0h6RZz5MZq3k.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-}
+    @import url('https://fonts.googleapis.com/css2?family=Offside&display=swap');
+
     html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
         font-family: 'Offside', sans-serif !important;
     }
