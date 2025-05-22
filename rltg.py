@@ -229,7 +229,7 @@ if not matches.empty:
     match_display["Formatted Date"] = pd.to_datetime(match_display["date"]).dt.strftime("%d %b %y")
     match_display = match_display[["Formatted Date", "Players", "match_type", "set1_score", "winner", "id"]]
     match_display.columns = ["Date", "Match Players", "Match Type", "Score", "Winner", "Match ID"]
-    st.dataframe(match_display.reset_index(drop=True))
+    st.dataframe(match_display.set_index('Date'))
 
 st.header("Player Rankings")
 stats = compute_stats(matches)
