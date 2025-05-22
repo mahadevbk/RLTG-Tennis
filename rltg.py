@@ -150,7 +150,6 @@ with st.sidebar:
                 "0-6", "1-6", "2-6", "3-6", "4-6", "5-7", "6-7"
             ].index(match_row["set1_score"])
         )
-        
         new_winner = st.radio("Update Winner", ["Team 1", "Team 2"],
                               index=0 if match_row["winner"] == "Team 1" else 1)
         if st.button("Update Match"):
@@ -230,7 +229,7 @@ if not matches.empty:
     match_display["Formatted Date"] = pd.to_datetime(match_display["date"]).dt.strftime("%d %b %y")
     match_display = match_display[["Formatted Date", "Players", "match_type", "set1_score", "winner", "id"]]
     match_display.columns = ["Date", "Match Players", "Match Type", "Score", "Winner", "Match ID"]
-    st.dataframe(match_display)
+    st.dataframe(match_display.reset_index(drop=True))
 
 st.header("Player Rankings")
 stats = compute_stats(matches)
