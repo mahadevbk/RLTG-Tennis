@@ -76,41 +76,17 @@ def compute_stats(matches):
     return stats
 
 # Streamlit UI
-#st.markdown('''
-#    <style>
-#    @import url('https://fonts.googleapis.com/css2?family=Offside&display=swap');
-#    html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
-#        font-family: 'Offside', cursive !important;
-#    }
-#    </style>
-#''', unsafe_allow_html=True)
 st.markdown('''
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Offside&display=swap');
-
-    html, body, [class*="st-"], [class^="css"] {
-        font-family: 'Offside', cursive !important;
-        font-size: 12px !important;
-    }
-
-    /* More targeted selector for st.title() */
-    [data-testid="stHeader"] h1 {
-        font-size: 70% !important;
-    }
-
-    h2 { font-size: 18px !important; }
-    h3 { font-size: 14px !important; }
-    h4, h5, h6 { font-size: 12px !important; }
-
-    .stText, .stMarkdown {
-        font-size: 12px !important;
+    @import url('https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap');
+    html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
+        font-family: 'Indie Flower', cursive !important;
     }
     </style>
 ''', unsafe_allow_html=True)
 
 
-
-st.title("🌼 RANCHES LADIES TENNIS GROUP 🎾")
+st.title("Ranches Ladies Tennis Group")
 
 players = load_players()
 matches = load_matches()
@@ -130,7 +106,14 @@ with st.sidebar:
         st.rerun()
 
     st.header("Edit/Delete Match")
-    match_to_edit = st.selectbox("Select Match to Edit/Delete", matches["id"].tolist() if not matches.empty else [])
+    match_display_id = matches.copy()
+    match_display_id["Players"] = match_display_id.apply(
+        lambda row: f"{row['team1_player1']}{' & ' + row['team1_player2'] if row['team1_player2'] else ''} vs {row['team2_player1']}{' & ' + row['team2_player2'] if row['team2_player2'] else ''}", axis=1
+    ).str.upper()
+    match_display_id["label"] = match_display_id.apply(lambda row: f"{row['id']} - {row['Players']} ({row['set1_score']})", axis=1)
+    match_id_map = dict(zip(match_display_id["label"], match_display_id["id"]))
+    match_to_edit_label = st.selectbox("Select Match to Edit/Delete", match_display_id["label"].tolist() if not matches.empty else [])
+    match_to_edit = match_id_map.get(match_to_edit_label, None)
     if match_to_edit:
         if st.button("Delete Match"):
             matches = matches[matches["id"] != match_to_edit]
@@ -166,7 +149,7 @@ winner = st.radio("Winner", ["Team 1", "Team 2"])
 if st.button("Submit Match"):
     match_id = str(uuid.uuid4())
     new_match = {
-        "id": match_id,
+        "id": f"Match-{datetime.now().strftime('%y%m%d%H%M%S')}",
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "match_type": match_type,
         "team1_player1": team1[0],
@@ -182,14 +165,21 @@ if st.button("Submit Match"):
     st.rerun()
 
 st.header("Match Records")
+
+# Filter by player
+player_filter = st.selectbox("Filter by Player (optional)", ["All"] + players)
 if not matches.empty:
     match_display = matches.copy()
+    if player_filter != "All":
+        match_display = match_display[
+            match_display.apply(lambda row: player_filter in [row['team1_player1'], row['team1_player2'], row['team2_player1'], row['team2_player2']], axis=1)
+        ]
     match_display["Players"] = match_display.apply(
         lambda row: f"{row['team1_player1']}{' & ' + row['team1_player2'] if row['team1_player2'] else ''} vs {row['team2_player1']}{' & ' + row['team2_player2'] if row['team2_player2'] else ''}", axis=1
     ).str.upper()
     match_display["Formatted Date"] = pd.to_datetime(match_display["date"]).dt.strftime("%d %b %y")
-    match_display = match_display[["Formatted Date", "Players", "match_type", "id"]]
-    match_display.columns = ["Date", "Match Players", "Match Type", "Match ID"]
+    match_display = match_display[["Formatted Date", "Players", "match_type", "set1_score", "winner", "id"]]
+    match_display.columns = ["Date", "Match Players", "Match Type", "Score", "Winner", "Match ID"]
     st.dataframe(match_display)
 
 st.header("Player Rankings")
@@ -207,7 +197,8 @@ rankings = pd.DataFrame([
 
 if not rankings.empty:
     rankings = rankings.sort_values(by=["Points", "Wins", "Games Won"], ascending=False)
-    st.dataframe(rankings.reset_index(drop=True))
+    rankings.index = rankings.index + 1
+    st.dataframe(rankings.reset_index(names='Rank'))
 
 st.header("Individual Player Insights")
 selected_player = st.selectbox("Select Player", players)
@@ -227,12 +218,3 @@ if selected_player:
         for partner, count in partners:
             st.write(f"- {partner.upper()}: {count} times")
         st.write(f"**Best Partner:** {partners[0][0].upper()}")
-
-#st.info("Built with ❤️ using [Streamlit](https://streamlit.io/) — free and open source. [Other Scripts by dev](https://devs-scripts.streamlit.app/) on Streamlit.")
-st.markdown("""
-<div style='background-color:var(--secondary-background-color); padding: 1rem; border-radius: 8px; color: var(--text-color);'>
-    Built with ❤️ using <a href='https://streamlit.io/' target='_blank' style='color: var(--primary-color); text-decoration: none;'>Streamlit</a> — free and open source.
-    <br><a href='https://devs-scripts.streamlit.app/' target='_blank' style='color: var(--primary-color); text-decoration: none;'>Other Scripts by dev</a> on Streamlit.
-</div>
-""", unsafe_allow_html=True)
-
