@@ -150,7 +150,7 @@ with st.sidebar:
                 "0-6", "1-6", "2-6", "3-6", "4-6", "5-7", "6-7"
             ].index(match_row["set1_score"])
         )
-        
+        )
         new_winner = st.radio("Update Winner", ["Team 1", "Team 2"],
                               index=0 if match_row["winner"] == "Team 1" else 1)
         if st.button("Update Match"):
@@ -247,7 +247,10 @@ rankings = pd.DataFrame([
 
 if not rankings.empty:
     rankings = rankings.sort_values(by=["Points", "Wins", "Games Won"], ascending=False)
-    st.dataframe(rankings.reset_index(drop=True))
+    rankings.reset_index(drop=True, inplace=True)
+    rankings.index += 1
+    rankings.index.name = "Rank"
+    st.dataframe(rankings)
 
 st.header("Individual Player Insights")
 selected_player = st.selectbox("Select Player", players)
