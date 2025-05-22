@@ -78,9 +78,14 @@ def compute_stats(matches):
 # Streamlit UI
 st.markdown('''
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap');
+    @font-face {
+    font-family: 'Offside';
+    src: url('https://fonts.gstatic.com/s/offsideregular/v13/HI_KiYMe1YgE5Rk0h6RZz5MZq3k.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
     html, body, [class*="st-"], [class^="css"], h1, h2, h3, h4, h5, h6, .stText, .stMarkdown {
-        font-family: 'Indie Flower', cursive !important;
+        font-family: 'Offside', sans-serif !important;
     }
     </style>
 ''', unsafe_allow_html=True)
@@ -197,8 +202,7 @@ rankings = pd.DataFrame([
 
 if not rankings.empty:
     rankings = rankings.sort_values(by=["Points", "Wins", "Games Won"], ascending=False)
-    rankings.index = rankings.index + 1
-    st.dataframe(rankings.reset_index(names='Rank'))
+    st.dataframe(rankings.reset_index(drop=True))
 
 st.header("Individual Player Insights")
 selected_player = st.selectbox("Select Player", players)
