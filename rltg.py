@@ -120,6 +120,51 @@ with st.sidebar:
     match_to_edit_label = st.selectbox("Select Match to Edit/Delete", match_display_id["label"].tolist() if not matches.empty else [])
     match_to_edit = match_id_map.get(match_to_edit_label, None)
     if match_to_edit:
+        match_row = matches[matches["id"] == match_to_edit].iloc[0]
+        st.write("### Edit Match")
+        edit_type = st.radio("Match Type", ["Singles", "Doubles"], index=0 if match_row["match_type"] == "Singles" else 1)
+        editable_players = players.copy()
+
+        if edit_type == "Singles":
+            ep1 = st.selectbox("Player 1", editable_players, index=editable_players.index(match_row["team1_player1"]))
+            editable_players = [p for p in editable_players if p != ep1]
+            ep2 = st.selectbox("Player 2", editable_players, index=editable_players.index(match_row["team2_player1"]))
+            et1 = [ep1]
+            et2 = [ep2]
+        else:
+            ep1 = st.selectbox("Team 1 - Player 1", editable_players, index=editable_players.index(match_row["team1_player1"]), key="e1")
+            editable_players = [p for p in editable_players if p != ep1]
+            ep2 = st.selectbox("Team 1 - Player 2", editable_players, index=editable_players.index(match_row["team1_player2"]), key="e2")
+            editable_players = [p for p in editable_players if p != ep2]
+            ep3 = st.selectbox("Team 2 - Player 1", editable_players, index=editable_players.index(match_row["team2_player1"]), key="e3")
+            editable_players = [p for p in editable_players if p != ep3]
+            ep4 = st.selectbox("Team 2 - Player 2", editable_players, index=editable_players.index(match_row["team2_player2"]), key="e4")
+            et1 = [ep1, ep2]
+            et2 = [ep3, ep4]
+
+        new_score = st.selectbox("Update Score", [
+            "6-0", "6-1", "6-2", "6-3", "6-4", "7-5", "7-6",
+            "0-6", "1-6", "2-6", "3-6", "4-6", "5-7", "6-7"],
+            index=[
+                "6-0", "6-1", "6-2", "6-3", "6-4", "7-5", "7-6",
+                "0-6", "1-6", "2-6", "3-6", "4-6", "5-7", "6-7"
+            ].index(match_row["set1_score"])
+        )
+        )
+        new_winner = st.radio("Update Winner", ["Team 1", "Team 2"],
+                              index=0 if match_row["winner"] == "Team 1" else 1)
+        if st.button("Update Match"):
+            matches.loc[matches["id"] == match_to_edit, "match_type"] = edit_type
+            matches.loc[matches["id"] == match_to_edit, "team1_player1"] = et1[0]
+            matches.loc[matches["id"] == match_to_edit, "team1_player2"] = et1[1] if edit_type == "Doubles" else ""
+            matches.loc[matches["id"] == match_to_edit, "team2_player1"] = et2[0]
+            matches.loc[matches["id"] == match_to_edit, "team2_player2"] = et2[1] if edit_type == "Doubles" else ""
+            matches.loc[matches["id"] == match_to_edit, "set1_score"] = new_score
+            matches.loc[matches["id"] == match_to_edit, "winner"] = new_winner
+            save_matches(matches)
+            st.success("Match updated successfully.")
+            st.rerun()
+
         if st.button("Delete Match"):
             matches = matches[matches["id"] != match_to_edit]
             save_matches(matches)
